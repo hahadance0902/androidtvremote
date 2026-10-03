@@ -27,10 +27,16 @@ jobs:
       - name: Create Mock google-services.json
         run: |
           mkdir -p app
-          echo '{"project_info":{"project_number":"12345678","project_id":"mock-id","storage_bucket":"mock.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:12345678:android:12345678","android_client_info":{"package_name":"com.hari.androidtvremote"}},"oauth_client":[],"api_key":[{"current_key":"mock_key"}],"services":{}}],"configuration_version":"1"}' > app/google-services.json
+          echo '{"project_info":{"project_number":"12345678","project_id":"mock-id","storage_bucket":"mock.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:12345678:android:12345678","and[...]' > app/google-services.json
 
       - name: Compile and Build Debug APK
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest --no-daemon
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
