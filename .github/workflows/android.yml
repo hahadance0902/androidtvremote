@@ -39,7 +39,7 @@ jobs:
                 "client_info": {
                   "mobilesdk_app_id": "1:12345678:android:12345678",
                   "android_client_info": {
-                    "package_name": "com.example.androidtvremote"
+                    "package_name": "com.hari.androidtvremote"
                   }
                 },
                 "oauth_client": [],
