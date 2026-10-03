@@ -27,7 +27,37 @@ jobs:
       - name: Create Mock google-services.json
         run: |
           mkdir -p app
-          echo '{"project_info":{"project_number":"12345678","project_id":"mock-id","storage_bucket":"mock.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:12345678:android:12345678","and[...]' > app/google-services.json
+          cat > app/google-services.json << 'EOF'
+          {
+            "project_info": {
+              "project_number": "12345678",
+              "project_id": "mock-project",
+              "storage_bucket": "mock.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:12345678:android:12345678",
+                  "android_client_info": {
+                    "package_name": "com.example.androidtvremote"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [
+                  {
+                    "current_key": "mock-api-key"
+                  }
+                ],
+                "services": {
+                  "appinvite_service": {
+                    "other_platform_oauth_client": []
+                  }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
 
       - name: Compile and Build Debug APK
         run: ./gradlew assembleDebug --no-daemon
