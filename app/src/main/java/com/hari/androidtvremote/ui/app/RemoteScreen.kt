@@ -1349,11 +1349,23 @@ private fun GoogleTvDPad(
                     .size(size * 0.41f)
                     .scale(centerScale)
                     .clip(CircleShape)
-                    .clickable {
-                        if (hapticsEnabled) {
-                            view.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
-                        }
-                        onAction(Remotemessage.RemoteKeyCode.KEYCODE_DPAD_CENTER, Remotemessage.RemoteDirection.SHORT)
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = {
+                                handlePress(
+                                    DPadZone.Center,
+                                    Remotemessage.RemoteKeyCode.KEYCODE_DPAD_CENTER
+                                )
+                                try {
+                                    tryAwaitRelease()
+                                } finally {
+                                    handleRelease(
+                                        DPadZone.Center,
+                                        Remotemessage.RemoteKeyCode.KEYCODE_DPAD_CENTER
+                                    )
+                                }
+                            }
+                        )
                     },
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.surface,
