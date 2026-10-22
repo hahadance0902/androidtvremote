@@ -308,7 +308,7 @@ fun RemoteScreen(
                 when (section) {
                     RemoteLayoutConfig.SECTION_POWER -> {
                         PowerRow(
-                            onPower = { onRemoteKey(Remotemessage.RemoteKeyCode.KEYCODE_POWER) },
+                            onPower = { wrappedOnRemoteKey(Remotemessage.RemoteKeyCode.KEYCODE_POWER) },
                             actionIconSize = actionIconSize
                         )
                     }
@@ -367,8 +367,8 @@ fun RemoteScreen(
                                     }
                                 },
                                 onBack = { wrappedOnRemoteKey(Remotemessage.RemoteKeyCode.KEYCODE_BACK) },
-                                onVolumeDown = wrappedOnVolumeDown,
-                                onVolumeUp = wrappedOnVolumeUp,
+                                onVolumeDown = { dir -> wrappedOnVolumeDown(dir) },
+                                onVolumeUp = { dir -> wrappedOnVolumeUp(dir) },
                                 onChannelUp = { wrappedOnRemoteKey(Remotemessage.RemoteKeyCode.KEYCODE_CHANNEL_UP) },
                                 onChannelDown = { wrappedOnRemoteKey(Remotemessage.RemoteKeyCode.KEYCODE_CHANNEL_DOWN) },
                                 onRecentApps = { wrappedOnRemoteKey(Remotemessage.RemoteKeyCode.KEYCODE_APP_SWITCH) },
