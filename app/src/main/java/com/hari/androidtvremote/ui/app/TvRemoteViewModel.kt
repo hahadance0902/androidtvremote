@@ -378,28 +378,33 @@ class TvRemoteViewModel(application: Application) : AndroidViewModel(application
         publishDeviceSnapshot()
     }
 
-    fun sendKey(keyCode: Remotemessage.RemoteKeyCode) {
+    fun sendKey(
+        keyCode: Remotemessage.RemoteKeyCode,
+        direction: Remotemessage.RemoteDirection = Remotemessage.RemoteDirection.SHORT
+    ) {
         if (!checkConnectionGuard()) return
-        when (keyCode) {
-            Remotemessage.RemoteKeyCode.KEYCODE_VOLUME_MUTE -> {
-                _uiState.update { it.copy(isMuted = !it.isMuted) }
-            }
-            Remotemessage.RemoteKeyCode.KEYCODE_VOLUME_UP -> {
-                _uiState.update {
-                    val current = it.volumeLevel ?: 50
-                    it.copy(volumeLevel = (current + 5).coerceAtMost(100), isMuted = false)
+        if (direction != Remotemessage.RemoteDirection.END_LONG) {
+            when (keyCode) {
+                Remotemessage.RemoteKeyCode.KEYCODE_VOLUME_MUTE -> {
+                    _uiState.update { it.copy(isMuted = !it.isMuted) }
                 }
-            }
-            Remotemessage.RemoteKeyCode.KEYCODE_VOLUME_DOWN -> {
-                _uiState.update {
-                    val current = it.volumeLevel ?: 50
-                    it.copy(volumeLevel = (current - 5).coerceAtLeast(0))
+                Remotemessage.RemoteKeyCode.KEYCODE_VOLUME_UP -> {
+                    _uiState.update {
+                        val current = it.volumeLevel ?: 50
+                        it.copy(volumeLevel = (current + 5).coerceAtMost(100), isMuted = false)
+                    }
                 }
+                Remotemessage.RemoteKeyCode.KEYCODE_VOLUME_DOWN -> {
+                    _uiState.update {
+                        val current = it.volumeLevel ?: 50
+                        it.copy(volumeLevel = (current - 5).coerceAtLeast(0))
+                    }
+                }
+                else -> Unit
             }
-            else -> Unit
         }
         viewModelScope.launch(Dispatchers.IO) {
-            app.androidRemoteTv?.sendCommand(keyCode, Remotemessage.RemoteDirection.SHORT)
+            app.androidRemoteTv?.sendCommand(keyCode, direction)
         }
     }
 
@@ -533,21 +538,25 @@ class TvRemoteViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun volumeUp() {
+    fun volumeUp(direction: Remotemessage.RemoteDirection = Remotemessage.RemoteDirection.SHORT) {
         if (!checkConnectionGuard()) return
-        sendKey(Remotemessage.RemoteKeyCode.KEYCODE_VOLUME_UP)
-        _uiState.update {
-            val next = (it.volumeFraction + 0.05f).coerceAtMost(1f)
-            it.copy(volumeFraction = next)
+        sendKey(Remotemessage.RemoteKeyCode.KEYCODE_VOLUME_UP, direction)
+        if (direction != Remotemessage.RemoteDirection.END_LONG) {
+            _uiState.update {
+                val next = (it.volumeFraction + 0.05f).coerceAtMost(1f)
+                it.copy(volumeFraction = next)
+            }
         }
     }
 
-    fun volumeDown() {
+    fun volumeDown(direction: Remotemessage.RemoteDirection = Remotemessage.RemoteDirection.SHORT) {
         if (!checkConnectionGuard()) return
-        sendKey(Remotemessage.RemoteKeyCode.KEYCODE_VOLUME_DOWN)
-        _uiState.update {
-            val next = (it.volumeFraction - 0.05f).coerceAtLeast(0f)
-            it.copy(volumeFraction = next)
+        sendKey(Remotemessage.RemoteKeyCode.KEYCODE_VOLUME_DOWN, direction)
+        if (direction != Remotemessage.RemoteDirection.END_LONG) {
+            _uiState.update {
+                val next = (it.volumeFraction - 0.05f).coerceAtLeast(0f)
+                it.copy(volumeFraction = next)
+            }
         }
     }
 
