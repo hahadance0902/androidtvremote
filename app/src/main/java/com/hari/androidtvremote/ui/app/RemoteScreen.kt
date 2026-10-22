@@ -140,9 +140,9 @@ fun RemoteScreen(
     onRequireConnection: () -> Unit,
     onCyclePadMode: () -> Unit,
     onQuickApp: (String) -> Unit,
-    onRemoteKey: (Remotemessage.RemoteKeyCode) -> Unit,
-    onVolumeUp: () -> Unit,
-    onVolumeDown: () -> Unit,
+    onRemoteKey: (Remotemessage.RemoteKeyCode, Remotemessage.RemoteDirection) -> Unit,
+    onVolumeUp: (Remotemessage.RemoteDirection) -> Unit,
+    onVolumeDown: (Remotemessage.RemoteDirection) -> Unit,
     onKeyboardText: (String) -> Unit,
     onKeyboardBackspace: (Int) -> Unit,
     onKeyboardEnter: () -> Unit,
@@ -156,19 +156,32 @@ fun RemoteScreen(
         }
     }
 
-    val wrappedOnRemoteKey: (Remotemessage.RemoteKeyCode) -> Unit = { key ->
-        performHaptic()
-        onRemoteKey(key)
+    fun wrappedOnRemoteKey(
+        key: Remotemessage.RemoteKeyCode,
+        direction: Remotemessage.RemoteDirection = Remotemessage.RemoteDirection.SHORT
+    ) {
+        if (direction != Remotemessage.RemoteDirection.END_LONG) {
+            performHaptic()
+        }
+        onRemoteKey(key, direction)
     }
 
-    val wrappedOnVolumeUp: () -> Unit = {
-        performHaptic()
-        onVolumeUp()
+    fun wrappedOnVolumeUp(
+        direction: Remotemessage.RemoteDirection = Remotemessage.RemoteDirection.SHORT
+    ) {
+        if (direction != Remotemessage.RemoteDirection.END_LONG) {
+            performHaptic()
+        }
+        onVolumeUp(direction)
     }
 
-    val wrappedOnVolumeDown: () -> Unit = {
-        performHaptic()
-        onVolumeDown()
+    fun wrappedOnVolumeDown(
+        direction: Remotemessage.RemoteDirection = Remotemessage.RemoteDirection.SHORT
+    ) {
+        if (direction != Remotemessage.RemoteDirection.END_LONG) {
+            performHaptic()
+        }
+        onVolumeDown(direction)
     }
 
     val wrappedOnQuickApp: (String) -> Unit = { appId ->
@@ -457,7 +470,7 @@ private fun RemotePadStage(
     stageHeight: Dp,
     isConnected: Boolean,
     hapticsEnabled: Boolean,
-    onAction: (Remotemessage.RemoteKeyCode) -> Unit,
+    onAction: (Remotemessage.RemoteKeyCode, Remotemessage.RemoteDirection) -> Unit,
 ) {
     val view = androidx.compose.ui.platform.LocalView.current
     BoxWithConstraints(
@@ -482,7 +495,7 @@ private fun RemotePadStage(
                     height = basePadSize,
                     isConnected = isConnected,
                     hapticsEnabled = hapticsEnabled,
-                    onAction = onAction
+                    onAction = { key -> onAction(key, Remotemessage.RemoteDirection.SHORT) }
                 )
 
                 RemotePadMode.NumberPad -> NumberPadPanel(
@@ -491,7 +504,7 @@ private fun RemotePadStage(
                         if (hapticsEnabled) {
                             view.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
                         }
-                        onAction(key)
+                        onAction(key, Remotemessage.RemoteDirection.SHORT)
                     }
                 )
             }
@@ -543,8 +556,8 @@ private fun RemoteControlDeck(
     onMute: () -> Unit,
     onVoice: () -> Unit,
     onBack: () -> Unit,
-    onVolumeDown: () -> Unit,
-    onVolumeUp: () -> Unit,
+    onVolumeDown: (Remotemessage.RemoteDirection) -> Unit,
+    onVolumeUp: (Remotemessage.RemoteDirection) -> Unit,
     onChannelUp: () -> Unit,
     onChannelDown: () -> Unit,
     onRecentApps: () -> Unit,
@@ -576,8 +589,10 @@ private fun RemoteControlDeck(
                     bottomIcon = Icons.Filled.Remove,
                     iconSize = actionIconSize,
                     contentColor = MaterialTheme.colorScheme.onSurface,
-                    onTopClick = onVolumeUp,
-                    onBottomClick = onVolumeDown
+                    onTopPress = { onVolumeUp(Remotemessage.RemoteDirection.START_LONG) },
+                    onTopRelease = { onVolumeUp(Remotemessage.RemoteDirection.END_LONG) },
+                    onBottomPress = { onVolumeDown(Remotemessage.RemoteDirection.START_LONG) },
+                    onBottomRelease = { onVolumeDown(Remotemessage.RemoteDirection.END_LONG) }
                 )
             }
             RemoteLayoutConfig.ROCKER_CHANNEL -> {
@@ -588,8 +603,10 @@ private fun RemoteControlDeck(
                     bottomIcon = Icons.Filled.KeyboardArrowDown,
                     iconSize = actionIconSize,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    onTopClick = onChannelUp,
-                    onBottomClick = onChannelDown
+                    onTopPress = onChannelUp,
+                    onTopRelease = {},
+                    onBottomPress = onChannelDown,
+                    onBottomRelease = {}
                 )
             }
         }
@@ -734,8 +751,10 @@ private fun RemoteControlDeck(
                     bottomIcon = Icons.Filled.Remove,
                     iconSize = actionIconSize,
                     contentColor = MaterialTheme.colorScheme.onSurface,
-                    onTopClick = onVolumeUp,
-                    onBottomClick = onVolumeDown
+                    onTopPress = { onVolumeUp(Remotemessage.RemoteDirection.START_LONG) },
+                    onTopRelease = { onVolumeUp(Remotemessage.RemoteDirection.END_LONG) },
+                    onBottomPress = { onVolumeDown(Remotemessage.RemoteDirection.START_LONG) },
+                    onBottomRelease = { onVolumeDown(Remotemessage.RemoteDirection.END_LONG) }
                 )
             }
             RemoteLayoutConfig.ROCKER_CHANNEL -> {
@@ -746,8 +765,10 @@ private fun RemoteControlDeck(
                     bottomIcon = Icons.Filled.KeyboardArrowDown,
                     iconSize = actionIconSize,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    onTopClick = onChannelUp,
-                    onBottomClick = onChannelDown
+                    onTopPress = onChannelUp,
+                    onTopRelease = {},
+                    onBottomPress = onChannelDown,
+                    onBottomRelease = {}
                 )
             }
         }
@@ -855,8 +876,10 @@ private fun RemoteVerticalRocker(
     bottomIcon: ImageVector,
     iconSize: Dp,
     contentColor: Color,
-    onTopClick: () -> Unit,
-    onBottomClick: () -> Unit,
+    onTopPress: () -> Unit,
+    onTopRelease: () -> Unit,
+    onBottomPress: () -> Unit,
+    onBottomRelease: () -> Unit,
 ) {
     var topPressed by remember { mutableStateOf(false) }
     var bottomPressed by remember { mutableStateOf(false) }
@@ -870,7 +893,6 @@ private fun RemoteVerticalRocker(
         animationSpec = spring(dampingRatio = 0.65f, stiffness = 600f),
         label = "rockerBottomScale"
     )
-    val scope = rememberCoroutineScope()
 
     Box(
         modifier = modifier
@@ -899,13 +921,19 @@ private fun RemoteVerticalRocker(
                     .fillMaxWidth()
                     .weight(1f)
                     .scale(topScale)
-                    .clickable {
-                        topPressed = true
-                        onTopClick()
-                        scope.launch {
-                            delay(160)
-                            topPressed = false
-                        }
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = {
+                                topPressed = true
+                                onTopPress()
+                                try {
+                                    tryAwaitRelease()
+                                } finally {
+                                    topPressed = false
+                                    onTopRelease()
+                                }
+                            }
+                        )
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -930,13 +958,19 @@ private fun RemoteVerticalRocker(
                     .fillMaxWidth()
                     .weight(1f)
                     .scale(bottomScale)
-                    .clickable {
-                        bottomPressed = true
-                        onBottomClick()
-                        scope.launch {
-                            delay(160)
-                            bottomPressed = false
-                        }
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = {
+                                bottomPressed = true
+                                onBottomPress()
+                                try {
+                                    tryAwaitRelease()
+                                } finally {
+                                    bottomPressed = false
+                                    onBottomRelease()
+                                }
+                            }
+                        )
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -1125,10 +1159,9 @@ private fun KeyboardDialog(
 private fun GoogleTvDPad(
     size: Dp,
     hapticsEnabled: Boolean,
-    onAction: (Remotemessage.RemoteKeyCode) -> Unit,
+    onAction: (Remotemessage.RemoteKeyCode, Remotemessage.RemoteDirection) -> Unit,
 ) {
     val view = androidx.compose.ui.platform.LocalView.current
-    val scope = rememberCoroutineScope()
     var activeZone by remember { mutableStateOf<DPadZone?>(null) }
     val padScale by animateFloatAsState(
         targetValue = if (activeZone != null) 0.985f else 1f,
@@ -1140,18 +1173,19 @@ private fun GoogleTvDPad(
     val sideOffset = if (size < 260.dp) 18.dp else 26.dp
     val edgeBubbleSize = if (size < 260.dp) 30.dp else 34.dp
 
-    fun activate(zone: DPadZone, key: Remotemessage.RemoteKeyCode) {
+    fun handlePress(zone: DPadZone, key: Remotemessage.RemoteKeyCode) {
         activeZone = zone
         if (hapticsEnabled) {
             view.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
         }
-        onAction(key)
-        scope.launch {
-            delay(160)
-            if (activeZone == zone) {
-                activeZone = null
-            }
+        onAction(key, Remotemessage.RemoteDirection.START_LONG)
+    }
+
+    fun handleRelease(zone: DPadZone, key: Remotemessage.RemoteKeyCode) {
+        if (activeZone == zone) {
+            activeZone = null
         }
+        onAction(key, Remotemessage.RemoteDirection.END_LONG)
     }
 
     Box(
@@ -1216,8 +1250,14 @@ private fun GoogleTvDPad(
                         iconAlignment = Alignment.TopCenter,
                         iconOffsetY = edgeOffset,
                         bubbleSize = edgeBubbleSize,
-                        onClick = {
-                            activate(
+                        onPress = {
+                            handlePress(
+                                DPadZone.Up,
+                                Remotemessage.RemoteKeyCode.KEYCODE_DPAD_UP
+                            )
+                        },
+                        onRelease = {
+                            handleRelease(
                                 DPadZone.Up,
                                 Remotemessage.RemoteKeyCode.KEYCODE_DPAD_UP
                             )
@@ -1236,8 +1276,14 @@ private fun GoogleTvDPad(
                         iconAlignment = Alignment.CenterEnd,
                         iconOffsetX = sideOffset * -1f,
                         bubbleSize = edgeBubbleSize,
-                        onClick = {
-                            activate(
+                        onPress = {
+                            handlePress(
+                                DPadZone.Right,
+                                Remotemessage.RemoteKeyCode.KEYCODE_DPAD_RIGHT
+                            )
+                        },
+                        onRelease = {
+                            handleRelease(
                                 DPadZone.Right,
                                 Remotemessage.RemoteKeyCode.KEYCODE_DPAD_RIGHT
                             )
@@ -1253,8 +1299,14 @@ private fun GoogleTvDPad(
                         iconAlignment = Alignment.BottomCenter,
                         iconOffsetY = edgeOffset * -1f,
                         bubbleSize = edgeBubbleSize,
-                        onClick = {
-                            activate(
+                        onPress = {
+                            handlePress(
+                                DPadZone.Down,
+                                Remotemessage.RemoteKeyCode.KEYCODE_DPAD_DOWN
+                            )
+                        },
+                        onRelease = {
+                            handleRelease(
                                 DPadZone.Down,
                                 Remotemessage.RemoteKeyCode.KEYCODE_DPAD_DOWN
                             )
@@ -1270,8 +1322,14 @@ private fun GoogleTvDPad(
                         iconAlignment = Alignment.CenterStart,
                         iconOffsetX = sideOffset,
                         bubbleSize = edgeBubbleSize,
-                        onClick = {
-                            activate(
+                        onPress = {
+                            handlePress(
+                                DPadZone.Left,
+                                Remotemessage.RemoteKeyCode.KEYCODE_DPAD_LEFT
+                            )
+                        },
+                        onRelease = {
+                            handleRelease(
                                 DPadZone.Left,
                                 Remotemessage.RemoteKeyCode.KEYCODE_DPAD_LEFT
                             )
@@ -1292,7 +1350,10 @@ private fun GoogleTvDPad(
                     .scale(centerScale)
                     .clip(CircleShape)
                     .clickable {
-                        activate(DPadZone.Center, Remotemessage.RemoteKeyCode.KEYCODE_DPAD_CENTER)
+                        if (hapticsEnabled) {
+                            view.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+                        }
+                        onAction(Remotemessage.RemoteKeyCode.KEYCODE_DPAD_CENTER, Remotemessage.RemoteDirection.SHORT)
                     },
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.surface,
@@ -1330,7 +1391,8 @@ private fun DirectionalZone(
     modifier: Modifier = Modifier,
     zone: DPadZone,
     activeZone: DPadZone?,
-    onClick: () -> Unit,
+    onPress: () -> Unit,
+    onRelease: () -> Unit,
     icon: @Composable () -> Unit,
     iconAlignment: Alignment,
     iconOffsetX: Dp = 0.dp,
@@ -1362,7 +1424,18 @@ private fun DirectionalZone(
                     )
                 )
             )
-            .clickable(onClick = onClick)
+            .pointerInput(zone) {
+                detectTapGestures(
+                    onPress = {
+                        onPress()
+                        try {
+                            tryAwaitRelease()
+                        } finally {
+                            onRelease()
+                        }
+                    }
+                )
+            }
     ) {
         Box(
             modifier = Modifier
